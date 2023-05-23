@@ -1,4 +1,5 @@
 using API.Extensions;
+using API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,8 @@ builder.Services.AppServices(builder.Configuration);    //Invoca todos services
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseMiddleware<ExceptionMiddleware>();   //executa meu próprio Middleware(ExceptionMiddleware)
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
