@@ -1,5 +1,6 @@
 ﻿using API.Data;
 using API.Interfaces;
+using API.Repository;
 using API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -12,16 +13,16 @@ namespace API.Extensions
     {
         public static IServiceCollection AppServices(this IServiceCollection services, IConfiguration config)
         {
-            services.AddDbContext<AppDbContext>(options =>
+            services.AddDbContext<AppDbContext>(options =>  //DB service
             {
-                options.UseSqlServer(config.GetConnectionString("DefaultConnection"));  //DB service
+                options.UseSqlServer(config.GetConnectionString("DefaultConnection"));
             });
 
-            services.AddCors(options =>
+            services.AddCors(options => //Cors service
             {
                 options.AddPolicy(name: "AngularApp", policy =>
                 {
-                    policy.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod();  //Cors service
+                    policy.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod();
                 });
             });
 
@@ -36,8 +37,9 @@ namespace API.Extensions
                 };
             });
 
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());    //AutoMapper service
             services.AddScoped<ITokenService, TokenService>();  //token service
-            
+            services.AddScoped<IUserRepository, UserRepository>();
 
             return services;
         }

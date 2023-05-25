@@ -1,5 +1,7 @@
+using API.Data;
 using API.Extensions;
 using API.Middleware;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,5 +31,19 @@ app.UseAuthentication();    //valida token
 app.UseAuthorization();     //valida se tem autorização para aceder a algo
 
 app.MapControllers();
+
+using var scope = app.Services.CreateScope();
+var services = scope.ServiceProvider;
+try
+{
+    var context = services.GetRequiredService<AppDbContext>();
+    //await context.Database.MigrateAsync();  //faz migrations automaticamente
+    await Seed.SeedUsers(context);  //seed users
+}
+catch (Exception ex)
+{
+    var logger = services.GetService<ILogger<Program>>();
+    logger.LogError(ex, "An error occurred during migration or seeding");
+}
 
 app.Run();
