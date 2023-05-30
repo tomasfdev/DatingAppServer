@@ -14,6 +14,7 @@ namespace API.Helpers
                 .ForMember(destination => destination.Age, options => options.MapFrom(source => source.DateOfBirth.CalculateAge()))
                 .ReverseMap();
             CreateMap<Photo, PhotoDto>().ReverseMap();
+            CreateMap<UserUpdateDto, AppUser>().ReverseMap();   //como as props correspondem exatamente ñ é preciso acrescentar nenhuma config
         }
     }
 }
