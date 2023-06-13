@@ -15,6 +15,7 @@ namespace API.Helpers
                 .ReverseMap();
             CreateMap<Photo, PhotoDto>().ReverseMap();
             CreateMap<UserUpdateDto, AppUser>().ReverseMap();   //como as props correspondem exatamente ñ é preciso acrescentar nenhuma config
+            CreateMap<RegisterDto, AppUser>().ReverseMap(); //como as props correspondem exatamente ñ é preciso acrescentar nenhuma config
         }
     }
 }
