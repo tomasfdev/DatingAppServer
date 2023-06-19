@@ -1,4 +1,6 @@
 ﻿using API.DTOs;
+using API.Extensions;
+using API.Helpers;
 using API.Interfaces;
 using API.Models;
 using AutoMapper;
@@ -11,6 +13,7 @@ namespace API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+    [ServiceFilter(typeof(LogUserActivity))]
     public class UsersController : ControllerBase
     {
         private readonly IUserRepository _userRepository;
@@ -25,9 +28,21 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<UserDto>>> GetUsers()
+        public async Task<ActionResult<PagedList<UserDto>>> GetUsers([FromQuery]UserParams userParams)
         {
-            var users = await _userRepository.GetUsersDtoAsync();
+            //vai buscar userName ao token...NameIdentifier é o NameId dentro do token(Ver NameId em tokenService)
+            var currentUser = await _userRepository.GetUserByNameAsync(User.GetUsername()); //GetUsername() é um extended method...ClaimsPrincipleExtensions !!
+
+            userParams.CurrentUserName = currentUser.UserName;
+
+            if (string.IsNullOrEmpty(userParams.Gender))
+            {
+                userParams.Gender = currentUser.Gender == "male" ? "female" : "male";   //se currentUser.Gender == "male" retorna "female" else "male"
+            }
+
+            var users = await _userRepository.GetUsersDtoAsync(userParams);
+
+            Response.AddPaginationHeader(new PaginationHeader(users.CurrentPage, users.PageSize, users.TotalCount, users.TotalPages));
 
             return Ok(users);
         }
@@ -49,8 +64,7 @@ namespace API.Controllers
         [HttpPut]
         public async Task<ActionResult> UpdateUser(UserUpdateDto userUpdateDto)
         {
-            var userName = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;    //vai buscar userName ao token...NameIdentifier é o NameId dentro do token(Ver NameId em tokenService)
-            var user = await _userRepository.GetUserByNameAsync(userName);
+            var user = await _userRepository.GetUserByNameAsync(User.GetUsername());
 
             if (user == null)
                 return NotFound();
@@ -66,8 +80,7 @@ namespace API.Controllers
         [HttpPost("add-photo")]
         public async Task<ActionResult<PhotoDto>> AddPhoto(IFormFile file)
         {
-            var userName = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var user = await _userRepository.GetUserByNameAsync(userName);
+            var user = await _userRepository.GetUserByNameAsync(User.GetUsername());
 
             if (user == null)
                 return NotFound();
@@ -98,8 +111,7 @@ namespace API.Controllers
         [HttpPut("set-main-photo/{photoId}")]
         public async Task<ActionResult> SetMainPhoto(int photoId)
         {
-            var userName = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var user = await _userRepository.GetUserByNameAsync(userName);
+            var user = await _userRepository.GetUserByNameAsync(User.GetUsername());
 
             if (user == null) return NotFound();
 
@@ -120,8 +132,7 @@ namespace API.Controllers
         [HttpDelete("delete-photo/{photoId}")]
         public async Task<ActionResult> DeletePhoto(int photoId)
         {
-            var userName = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var user = await _userRepository.GetUserByNameAsync(userName);
+            var user = await _userRepository.GetUserByNameAsync(User.GetUsername());
 
             if (user == null) return NotFound();
 

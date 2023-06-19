@@ -1,5 +1,6 @@
 ﻿using API.Data;
 using API.DTOs;
+using API.Helpers;
 using API.Interfaces;
 using API.Models;
 using AutoMapper;
@@ -13,6 +14,7 @@ namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [ServiceFilter(typeof(LogUserActivity))]
     public class AccountController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -52,7 +54,8 @@ namespace API.Controllers
             {
                 Username = newUser.UserName,
                 Token = _tokenService.CreateToken(newUser),
-                KnownAs = newUser.KnownAs
+                KnownAs = newUser.KnownAs,
+                Gender = newUser.Gender
             });
         }
 
@@ -79,7 +82,8 @@ namespace API.Controllers
                 Username = user.UserName,
                 Token = _tokenService.CreateToken(user),
                 PhotoUrl = user.Photos.FirstOrDefault(p => p.IsMain)?.Url,
-                KnownAs = user.KnownAs
+                KnownAs = user.KnownAs,
+                Gender = user.Gender
             });
         }
     }

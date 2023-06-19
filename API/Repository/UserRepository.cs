@@ -1,5 +1,6 @@
 ﻿using API.Data;
 using API.DTOs;
+using API.Helpers;
 using API.Interfaces;
 using API.Models;
 using AutoMapper;
@@ -41,9 +42,25 @@ namespace API.Repository
             return await _context.Users.Include(p => p.Photos).ToListAsync();
         }
 
-        public async Task<IReadOnlyList<UserDto>> GetUsersDtoAsync()
+        public async Task<PagedList<UserDto>> GetUsersDtoAsync(UserParams userParams)
         {
-            return await _context.Users.ProjectTo<UserDto>(_mapper.ConfigurationProvider).ToListAsync();
+            var query = _context.Users.AsQueryable();
+
+            query = query.Where(u => u.UserName != userParams.CurrentUserName); //retorna todos Users com o nome diferente ao CurrentUser.(Exemplo: Em Matches, quando aparece a lista de Users, assim aparecem todos os Users menos o perfil do CurrentUser)
+            query = query.Where(u => u.Gender == userParams.Gender);    //retorna apenas os Users com o mesmo Gender do CurrentUser
+
+            var menorDataNascimento = DateTime.Today.AddYears(-userParams.MaxAge - 1);  //oldest DateOfBirth/Person
+            var maiorDataNascimento = DateTime.Today.AddYears(-userParams.MinAge);
+
+            query = query.Where(u => u.DateOfBirth >= menorDataNascimento && u.DateOfBirth <= maiorDataNascimento);
+
+            query = userParams.OrderBy switch
+            {
+                "created" => query.OrderByDescending(u => u.Created),
+                _ => query.OrderByDescending(u => u.LastActive) //_ é o caso default
+            };
+
+            return await PagedList<UserDto>.CreateAsync(query.AsNoTracking().ProjectTo<UserDto>(_mapper.ConfigurationProvider), userParams.PageNumber, userParams.PageSize);
         }
 
         public async Task<bool> SaveAllAsync()
