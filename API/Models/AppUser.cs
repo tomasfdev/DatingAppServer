@@ -18,6 +18,15 @@ namespace API.Models
         public string? Interests { get; set; }
         public string? City { get; set; }
         public string? Country { get; set; }
+
+        #region Relação AppUser 1-M Photo
         public ICollection<Photo> Photos { get; set; }
+        #endregion
+        #region Relação AppUser M-M UserLike
+        public ICollection<UserLike>? LikedUsers { get; set; }   //users que gostou
+        #endregion
+        #region Relação AppUser M-M UserLike
+        public ICollection<UserLike>? LikedByUsers { get; set; } //users que gostaram
+        #endregion
     }
 }

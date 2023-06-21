@@ -40,10 +40,11 @@ namespace API.Extensions
 
             services.Configure<CloudinarySettings>(config.GetSection("CloudinarySettings"));    //Cloudinary service
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());    //AutoMapper service
-            services.AddScoped<ITokenService, TokenService>();  //Token service
-            services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<IPhotoService, PhotoService>();
             services.AddScoped<LogUserActivity>();
+            services.AddScoped<ITokenService, TokenService>();  //Token service
+            services.AddScoped<IPhotoService, PhotoService>();
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<ILikesRepository, LikesRepository>();
 
             return services;
         }
