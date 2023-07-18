@@ -11,7 +11,7 @@ namespace API.Models
         public string? PublicId { get; set; }
         #region AppUser M-1 Photo
         public int AppUserId { get; set; }
-        public AppUser AppUser { get; set; }
+        public virtual AppUser AppUser { get; set; }
         #endregion
     }
 }

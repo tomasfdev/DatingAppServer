@@ -3,6 +3,7 @@ using API.Extensions;
 using API.Helpers;
 using API.Interfaces;
 using API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,6 +11,8 @@ namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [ServiceFilter(typeof(LogUserActivity))]
     public class LikesController : ControllerBase
     {
         private readonly ILikesRepository _likesRepository;

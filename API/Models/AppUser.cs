@@ -20,13 +20,17 @@ namespace API.Models
         public string? Country { get; set; }
 
         #region Relação AppUser 1-M Photo
-        public ICollection<Photo> Photos { get; set; }
+        public virtual ICollection<Photo> Photos { get; set; }
         #endregion
+
         #region Relação AppUser M-M UserLike
-        public ICollection<UserLike>? LikedUsers { get; set; }   //users que gostou
+        public virtual ICollection<UserLike>? LikedUsers { get; set; }   //users que gostou
+        public virtual ICollection<UserLike>? LikedByUsers { get; set; } //users que gostaram
         #endregion
-        #region Relação AppUser M-M UserLike
-        public ICollection<UserLike>? LikedByUsers { get; set; } //users que gostaram
+
+        #region Relação AppUser M-M Message
+        public virtual ICollection<Message> MessagesSent { get; set; }
+        public virtual ICollection<Message> MessagesReceived { get; set; }
         #endregion
     }
 }

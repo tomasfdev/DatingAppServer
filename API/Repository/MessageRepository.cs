@@ -1,0 +1,85 @@
+﻿using API.Data;
+using API.DTOs;
+using API.Helpers;
+using API.Interfaces;
+using API.Models;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using Microsoft.EntityFrameworkCore;
+
+namespace API.Repository
+{
+    public class MessageRepository : IMessageRepository
+    {
+        private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
+
+        public MessageRepository(AppDbContext context, IMapper mapper)
+        {
+            _context = context;
+            _mapper = mapper;
+        }
+
+        public void AddMessage(Message message)
+        {
+            _context.Messages.Add(message);
+        }
+
+        public void DeleteMessage(Message message)
+        {
+            _context.Messages.Remove(message);
+        }
+
+        public async Task<Message> GetMessage(int id)
+        {
+            return await _context.Messages.FindAsync(id);
+        }
+
+        public async Task<PagedList<MessageDto>> GetMessagesForUser(MessageParams messageParams)
+        {
+            var query = _context.Messages
+                .OrderByDescending(m => m.MessageSent)  //OrderByDescending para obter a mensagem mais recente primeiro
+                .AsQueryable();
+
+            query = messageParams.Container switch
+            {
+                "Inbox" => query.Where(m => m.RecipientUsername == messageParams.Username && m.RecipientDeleted == false),
+                "Outbox" => query.Where(m => m.SenderUsername == messageParams.Username && m.SenderDeleted == false),   //msg enviadas pelo user
+                _ => query.Where(m => m.RecipientUsername == messageParams.Username && m.RecipientDeleted == false && m.DateRead == null)  //caso default, unread messages
+            };
+
+            var messages = query.ProjectTo<MessageDto>(_mapper.ConfigurationProvider);
+
+            return await PagedList<MessageDto>.CreateAsync(messages, messageParams.PageNumber, messageParams.PageSize);
+        }
+
+        public async Task<IEnumerable<MessageDto>> GetMessageThread(string currentUsername, string recipientUsername)
+        {
+            var messages = await _context.Messages
+                .Include(user => user.Sender).ThenInclude(photo => photo.Photos)
+                .Include(user => user.Recipient).ThenInclude(photo => photo.Photos)
+                .Where(m => m.RecipientUsername == currentUsername && m.RecipientDeleted == false && m.SenderUsername == recipientUsername || m.RecipientUsername == recipientUsername && m.SenderDeleted == false && m.SenderUsername == currentUsername) //para ir buscar uma conversa/chat entre 2 users é preciso o Recipient e o Sender
+                .OrderBy(m => m.MessageSent)    //OrderByDescending para obter a mensagem mais recente primeiro
+                .ToListAsync();
+
+            var unreadMessages = messages.Where(m => m.DateRead == null && m.RecipientUsername == currentUsername).ToList();
+
+            if (unreadMessages.Any())   //se houver unread messages
+            {
+                foreach (var message in unreadMessages)
+                {
+                    message.DateRead = DateTime.UtcNow; //vai ficar lidas
+                }
+
+                await _context.SaveChangesAsync();  //guarda alterações
+            }
+
+            return _mapper.Map<IEnumerable<MessageDto>>(messages);
+        }
+
+        public async Task<bool> SaveAllAsync()
+        {
+            return await _context.SaveChangesAsync() > 0;
+        }
+    }
+}
