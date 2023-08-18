@@ -1,9 +1,11 @@
 ﻿using API.Data;
 using API.Helpers;
 using API.Interfaces;
+using API.Models;
 using API.Repository;
 using API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -27,6 +29,16 @@ namespace API.Extensions
                 });
             });
 
+            //--------------------------Identity Services------------------------------------------------------------------------
+
+            services.AddIdentityCore<AppUser>(options =>
+            {
+                options.Password.RequireNonAlphanumeric = false;
+            })
+                .AddRoles<AppRole>()
+                .AddRoleManager<RoleManager<AppRole>>()
+                .AddEntityFrameworkStores<AppDbContext>();
+
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>  //Authentication service
             {
                 options.TokenValidationParameters = new TokenValidationParameters
@@ -36,6 +48,12 @@ namespace API.Extensions
                     ValidateIssuer = false,
                     ValidateAudience = false
                 };
+            });
+
+            services.AddAuthorization(options =>    //Authorization service
+            {
+                options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
+                options.AddPolicy("ModeratePhotoRole", policy => policy.RequireRole("Admin", "Moderator"));
             });
 
             services.Configure<CloudinarySettings>(config.GetSection("CloudinarySettings"));    //Cloudinary service

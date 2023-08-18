@@ -1,13 +1,10 @@
 ﻿using API.Extensions;
+using Microsoft.AspNetCore.Identity;
 
 namespace API.Models
 {
-    public class AppUser
+    public class AppUser : IdentityUser<int>
     {
-        public int Id { get; set; }
-        public string UserName { get; set; }
-        public byte[] PasswordHash { get; set; }
-        public byte[] PasswordSalt { get; set; }
         public DateTime DateOfBirth { get; set; }
         public string? KnownAs { get; set; }
         public DateTime Created { get; set; } = DateTime.Now;
@@ -31,6 +28,10 @@ namespace API.Models
         #region Relação AppUser M-M Message
         public virtual ICollection<Message> MessagesSent { get; set; }
         public virtual ICollection<Message> MessagesReceived { get; set; }
+        #endregion
+
+        #region Relação AppUser M-M AppUserRoles
+        public virtual ICollection<AppUserRole> UserRoles { get; set; }
         #endregion
     }
 }
