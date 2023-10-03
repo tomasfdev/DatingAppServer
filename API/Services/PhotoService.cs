@@ -20,7 +20,6 @@ namespace API.Services
         public async Task<ImageUploadResult> AddPhotoAsync(IFormFile formFile)
         {
             var uploadResult = new ImageUploadResult();
-
             if (formFile.Length > 0)    //verificar se há foto
             {
                 using var stream = formFile.OpenReadStream();

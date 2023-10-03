@@ -22,6 +22,8 @@ namespace API.Helpers
                 .ForMember(desination => desination.SenderPhotoUrl, options => options.MapFrom(source => source.Sender.Photos.FirstOrDefault(photo => photo.IsMain).Url))
                 .ForMember(desination => desination.RecipientPhotoUrl, options => options.MapFrom(source => source.Recipient.Photos.FirstOrDefault(photo => photo.IsMain).Url))
                 .ReverseMap();
+            CreateMap<DateTime, DateTime>().ConvertUsing(d => DateTime.SpecifyKind(d, DateTimeKind.Utc));
+            CreateMap<DateTime?, DateTime?>().ConvertUsing(d => d.HasValue ? DateTime.SpecifyKind(d.Value, DateTimeKind.Utc) : null);
         }
     }
 }

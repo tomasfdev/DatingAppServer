@@ -2,6 +2,7 @@ using API.Data;
 using API.Extensions;
 using API.Middleware;
 using API.Models;
+using API.SignalR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -33,6 +34,8 @@ app.UseAuthentication();    //valida token
 app.UseAuthorization();     //valida se tem autorização para aceder a algo
 
 app.MapControllers();
+app.MapHub<PresenceHub>("hubs/presence");   //presenceHub
+app.MapHub<MessageHub>("hubs/message");   //messageHub
 
 using var scope = app.Services.CreateScope();
 var services = scope.ServiceProvider;
