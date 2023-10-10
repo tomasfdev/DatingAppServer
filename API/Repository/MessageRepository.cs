@@ -81,14 +81,13 @@ namespace API.Repository
 
         public async Task<IEnumerable<MessageDto>> GetMessageThread(string currentUsername, string recipientUsername)
         {
-            var messages = await _context.Messages
-                .Include(user => user.Sender).ThenInclude(photo => photo.Photos)
-                .Include(user => user.Recipient).ThenInclude(photo => photo.Photos)
+            //using projection
+            var query = _context.Messages
                 .Where(m => m.RecipientUsername == currentUsername && m.RecipientDeleted == false && m.SenderUsername == recipientUsername || m.RecipientUsername == recipientUsername && m.SenderDeleted == false && m.SenderUsername == currentUsername) //para ir buscar uma conversa/chat entre 2 users é preciso o Recipient e o Sender
                 .OrderBy(m => m.MessageSent)    //OrderByDescending para obter a mensagem mais recente primeiro
-                .ToListAsync();
+                .AsQueryable();
 
-            var unreadMessages = messages.Where(m => m.DateRead == null && m.RecipientUsername == currentUsername).ToList();
+            var unreadMessages = query.Where(m => m.DateRead == null && m.RecipientUsername == currentUsername).ToList();
 
             if (unreadMessages.Any())   //se houver unread messages
             {
@@ -96,21 +95,14 @@ namespace API.Repository
                 {
                     message.DateRead = DateTime.UtcNow; //vao ficar lidas
                 }
-
-                await _context.SaveChangesAsync();  //guarda alterações
             }
 
-            return _mapper.Map<IEnumerable<MessageDto>>(messages);
+            return await query.ProjectTo<MessageDto>(_mapper.ConfigurationProvider).ToListAsync();  //using projection
         }
 
         public void RemoveConnection(Connection connection)
         {
             _context.Connections.Remove(connection);
-        }
-
-        public async Task<bool> SaveAllAsync()
-        {
-            return await _context.SaveChangesAsync() > 0;
         }
     }
 }

@@ -11,7 +11,6 @@ namespace API.Interfaces
         Task<IEnumerable<MessageDto>> GetMessageThread(string currentUsername, string recipientUsername); //lista de msgs, uma conversa/chat
         void AddMessage(Message message);
         void DeleteMessage(Message message);
-        Task<bool> SaveAllAsync();
         void AddGroup(Group group);
         void RemoveConnection(Connection connection);
         Task<Connection> GetConnection(string connectionId);

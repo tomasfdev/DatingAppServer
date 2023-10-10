@@ -34,9 +34,7 @@ namespace API.Extensions
             services.AddScoped<LogUserActivity>();
             services.AddScoped<ITokenService, TokenService>();  //Token service
             services.AddScoped<IPhotoService, PhotoService>();
-            services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<ILikesRepository, LikesRepository>();
-            services.AddScoped<IMessageRepository, MessageRepository>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddSignalR();
             services.AddSingleton<PresenceTracker>();   //Singleton para que o serviço/resultado seja sempre o mesmo para cada request e que acabe quando a app encerrar
 

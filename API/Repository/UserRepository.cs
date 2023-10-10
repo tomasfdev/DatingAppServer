@@ -25,16 +25,21 @@ namespace API.Repository
             return await _context.Users.FindAsync(id);
         }
 
-        public async Task<AppUser> GetUserByNameAsync(string name)
+        public async Task<AppUser> GetUserByNameAsync(string username)
         {
-            return await _context.Users.Include(p => p.Photos).SingleOrDefaultAsync(u => u.UserName == name);
+            return await _context.Users.Include(p => p.Photos).SingleOrDefaultAsync(u => u.UserName == username);
         }
 
-        public async Task<UserDto> GetUserDtoByNamedAsync(string name)
+        public async Task<UserDto> GetUserDtoByNamedAsync(string username)
         {
-            return await _context.Users.Where(u => u.UserName == name).ProjectTo<UserDto>(_mapper.ConfigurationProvider).SingleOrDefaultAsync();    //retorna um UserDto ao inves de um AppUser
+            return await _context.Users.Where(u => u.UserName == username).ProjectTo<UserDto>(_mapper.ConfigurationProvider).SingleOrDefaultAsync();    //retorna um UserDto ao inves de um AppUser
             //para a db ñ fazer extra work, para ser + eficiente... pq existem certas props em AppUser que ñ são retornadas como por exemplo(PasswordHash)
             //etão para ser + eficiente retornamos um UserDto apenas com as props necessárias !! Isto é um plus
+        }
+
+        public async Task<string> GetUserGenderAsync(string username)
+        {
+            return await _context.Users.Where(n => n.UserName == username).Select(g => g.Gender).FirstOrDefaultAsync();
         }
 
         public async Task<IReadOnlyList<AppUser>> GetUsersAsync()
@@ -61,11 +66,6 @@ namespace API.Repository
             };
 
             return await PagedList<UserDto>.CreateAsync(query.AsNoTracking().ProjectTo<UserDto>(_mapper.ConfigurationProvider), userParams.PageNumber, userParams.PageSize);
-        }
-
-        public async Task<bool> SaveAllAsync()
-        {
-            return await _context.SaveChangesAsync() > 0;   //se for maior que 0 retorna true, salvou algo... caso contrario retorna false, ñ salvou nada
         }
 
         public void Update(AppUser appUser)

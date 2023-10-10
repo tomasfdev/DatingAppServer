@@ -16,13 +16,13 @@ namespace API.Controllers
     [ServiceFilter(typeof(LogUserActivity))]
     public class UsersController : ControllerBase
     {
-        private readonly IUserRepository _userRepository;
+        private readonly IUnitOfWork _uow;
         private readonly IMapper _mapper;
         private readonly IPhotoService _photoService;
 
-        public UsersController(IUserRepository userRepository, IMapper mapper, IPhotoService photoService)
+        public UsersController(IUnitOfWork uow, IMapper mapper, IPhotoService photoService)
         {
-            _userRepository = userRepository;
+            _uow = uow;
             _mapper = mapper;
             _photoService = photoService;
         }
@@ -31,16 +31,15 @@ namespace API.Controllers
         public async Task<ActionResult<PagedList<UserDto>>> GetUsers([FromQuery]UserParams userParams)
         {
             //vai buscar userName ao token...NameIdentifier é o NameId dentro do token(Ver NameId em tokenService)
-            var currentUser = await _userRepository.GetUserByNameAsync(User.GetUsername()); //GetUsername() é um extended method...ClaimsPrincipleExtensions !!
-
-            userParams.CurrentUserName = currentUser.UserName;
+            var userGender = await _uow.UserRepository.GetUserGenderAsync(User.GetUsername()); //GetUsername() é um extended method...ClaimsPrincipleExtensions !!
+            userParams.CurrentUserName = User.GetUsername();
 
             if (string.IsNullOrEmpty(userParams.Gender))
             {
-                userParams.Gender = currentUser.Gender == "male" ? "female" : "male";   //se currentUser.Gender == "male" retorna "female" else "male"
+                userParams.Gender = userGender == "male" ? "female" : "male";   //se currentUser.Gender == "male" retorna "female" else "male"
             }
 
-            var users = await _userRepository.GetUsersDtoAsync(userParams);
+            var users = await _uow.UserRepository.GetUsersDtoAsync(userParams);
 
             Response.AddPaginationHeader(new PaginationHeader(users.CurrentPage, users.PageSize, users.TotalCount, users.TotalPages));
 
@@ -56,7 +55,7 @@ namespace API.Controllers
         [HttpGet("{username}")]
         public async Task<ActionResult<UserDto>> GetUserByName(string username)
         {
-            var user = await _userRepository.GetUserDtoByNamedAsync(username);
+            var user = await _uow.UserRepository.GetUserDtoByNamedAsync(username);
 
             return Ok(user);
         }
@@ -64,14 +63,14 @@ namespace API.Controllers
         [HttpPut]
         public async Task<ActionResult> UpdateUser(UserUpdateDto userUpdateDto)
         {
-            var user = await _userRepository.GetUserByNameAsync(User.GetUsername());
+            var user = await _uow.UserRepository.GetUserByNameAsync(User.GetUsername());
 
             if (user == null)
                 return NotFound();
 
             _mapper.Map(userUpdateDto, user);   //mapeia e actualiza as props... De userUpdateDto que recebeu/entrou para user que era o "original" que estava na db 
 
-            if (await _userRepository.SaveAllAsync())   //guarda na db
+            if (await _uow.Complete())   //guarda na db
                 return NoContent();
 
             return BadRequest("Failed to update user");
@@ -80,7 +79,7 @@ namespace API.Controllers
         [HttpPost("add-photo")]
         public async Task<ActionResult<PhotoDto>> AddPhoto(IFormFile file)
         {
-            var user = await _userRepository.GetUserByNameAsync(User.GetUsername());
+            var user = await _uow.UserRepository.GetUserByNameAsync(User.GetUsername());
 
             if (user == null)
                 return NotFound();
@@ -100,7 +99,7 @@ namespace API.Controllers
 
             user.Photos.Add(photo); //estes methods (por exemplo Add) só são possiveis pq EntityFrameWork está a dar track no user em memoria(primeiras linhas de codigo deste methods AddPhoto)
 
-            if (await _userRepository.SaveAllAsync())
+            if (await _uow.Complete())
             {
                 return CreatedAtAction(nameof(GetUserByName), new {username = user.UserName}, _mapper.Map<PhotoDto>(photo));    //se guardar corretamente retorna photoDto
             }
@@ -111,7 +110,7 @@ namespace API.Controllers
         [HttpPut("set-main-photo/{photoId}")]
         public async Task<ActionResult> SetMainPhoto(int photoId)
         {
-            var user = await _userRepository.GetUserByNameAsync(User.GetUsername());
+            var user = await _uow.UserRepository.GetUserByNameAsync(User.GetUsername());
 
             if (user == null) return NotFound();
 
@@ -124,7 +123,7 @@ namespace API.Controllers
             if (currentMainPhoto != null) currentMainPhoto.IsMain = false;
             photo.IsMain = true;
 
-            if (await _userRepository.SaveAllAsync()) return NoContent();
+            if (await _uow.Complete()) return NoContent();
 
             return BadRequest("Problem setting the main photo");
         }
@@ -132,7 +131,7 @@ namespace API.Controllers
         [HttpDelete("delete-photo/{photoId}")]
         public async Task<ActionResult> DeletePhoto(int photoId)
         {
-            var user = await _userRepository.GetUserByNameAsync(User.GetUsername());
+            var user = await _uow.UserRepository.GetUserByNameAsync(User.GetUsername());
 
             if (user == null) return NotFound();
 
@@ -149,7 +148,7 @@ namespace API.Controllers
 
             user.Photos.Remove(photo);
 
-            if (await _userRepository.SaveAllAsync()) return Ok();
+            if (await _uow.Complete()) return Ok();
 
             return BadRequest("Problem deleting photo");
         }
