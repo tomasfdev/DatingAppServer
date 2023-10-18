@@ -16,11 +16,6 @@ namespace API.Extensions
     {
         public static IServiceCollection AppServices(this IServiceCollection services, IConfiguration config)
         {
-            services.AddDbContext<AppDbContext>(options =>  //DB service
-            {
-                options.UseSqlServer(config.GetConnectionString("DefaultConnection"));
-            });
-
             services.AddCors(options => //Cors service
             {
                 options.AddPolicy(name: "AngularApp", policy =>

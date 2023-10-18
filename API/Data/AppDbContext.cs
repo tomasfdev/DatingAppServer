@@ -10,6 +10,7 @@ namespace API.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true); //resolve erro:"System.InvalidCastException: 'Cannot write DateTime with Kind=Unspecified to PostgreSQL type 'timestamp with time zone'..."
         }
 
         public DbSet<UserLike> Likes { get; set; }
